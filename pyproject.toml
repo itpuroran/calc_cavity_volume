@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "calc-cavity-solution"
+version = "0.1.0"
+description = ""
+authors = ["ProtKsen_ITP <protcenko.kseniya@gmail.com>"]
+readme = "README.md"
+packages = [{include = "calc_cavity_solution"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+mypy = "^0.991"
+flake8 = "^6.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

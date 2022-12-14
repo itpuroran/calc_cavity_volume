@@ -1,0 +1,20 @@
+{
+    "python.linting.enabled": true,
+    "python.linting.mypyEnabled": false,
+    "python.linting.flake8Enabled": false,
+    "editor.rulers": [99],
+
+    "search.exclude": {
+        ".gitignore": true,
+        ".venv": true,
+        "*.pyc": true,
+        "**/__pycache__": true
+    },
+    "files.exclude": {
+        ".venv": true,
+        "*.pyc": true,
+        "**/__pycache__": true
+    },
+    "python.linting.pydocstyleEnabled": false,
+    "python.linting.pylintEnabled": true,
+  }

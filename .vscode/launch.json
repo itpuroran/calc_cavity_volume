@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "calc_cavity_solution",
+            "type": "python",
+            "request": "launch",
+            "module": "calc_cavity_solution",
+            "envFile": "${workspaceFolder}/.env",
+            "console": "internalConsole",
+        },
+    ]
+  }
