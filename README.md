@@ -36,8 +36,8 @@ cd cavsol
 ```
 python3 -m venv .venv
 source .venv/bin/activate
-pip install numpy
-pip install networkx
+python3 -m pip install numpy
+python3 -m install networkx
 ```
 
 Запуск скрипта выполняется командой
