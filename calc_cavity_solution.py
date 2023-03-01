@@ -6,10 +6,10 @@ import networkx as nx
 
 # ---- main parameters --------
 DUMPFILE_NAME = 'dump.txt'
-NUMBER_OF_CELLS_1D = 20
+NUMBER_OF_CELLS_1D = 40
 R_SEP = 1
-R_NEAREST_NEIGHBOURS = 1.5
-NUM_NEIGHBOURS_LIQUID = 8
+R_NEAREST_NEIGHBOURS = 1.66
+NUM_NEIGHBOURS_LIQUID = 1
 ENCODING = 'cp1252' # 'utf-8'
 # full list of encoding: https://docs.python.org/3/library/codecs.html#standard-encodings
 # -----------------------------
@@ -27,35 +27,36 @@ def set_phase_pars(pars: np.array, box: dict) -> np.array:
     for par_start in pars:
         neighs = []
         for par in pars:
-
-            dist_x = min(
-                abs(par_start['x'] - par['x']),
-                abs(box['x_length'] - abs(par_start['x'] - par['x']))
-            )
-
-            if dist_x <= R_NEAREST_NEIGHBOURS:
-
-                dist_y = min(
-                    abs(par_start['y'] - par['y']),
-                    abs(box['y_length'] - abs(par_start['y'] - par['y']))
+            if par_start['id'] != par['id']:
+                
+                dist_x = min(
+                    abs(par_start['x'] - par['x']),
+                    abs(box['x_length'] - abs(par_start['x'] - par['x']))
                 )
 
-                if dist_y <= R_NEAREST_NEIGHBOURS:
+                if dist_x ** 2 <= R_NEAREST_NEIGHBOURS ** 2:
 
-                    dist_z = min(
-                        abs(par_start['z'] - par['z']),
-                        abs(box['z_length'] - abs(par_start['z'] - par['z']))
+                    dist_y = min(
+                        abs(par_start['y'] - par['y']),
+                        abs(box['y_length'] - abs(par_start['y'] - par['y']))
                     )
 
-                    if dist_z <= R_NEAREST_NEIGHBOURS:
+                    if dist_y ** 2 <= R_NEAREST_NEIGHBOURS ** 2:
 
-                        dist = math.sqrt(dist_x ** 2 + dist_y ** 2 + dist_z ** 2)
+                        dist_z = min(
+                            abs(par_start['z'] - par['z']),
+                            abs(box['z_length'] - abs(par_start['z'] - par['z']))
+                        )
 
-                        if dist <= R_NEAREST_NEIGHBOURS:
-                            neighs.append(par['id'])
-                            if len(neighs) >= NUM_NEIGHBOURS_LIQUID:
-                                par_start['phase'] = 1
-                                break
+                        if dist_z ** 2 <= R_NEAREST_NEIGHBOURS ** 2:
+
+                            dist = math.sqrt(dist_x ** 2 + dist_y ** 2 + dist_z ** 2)
+
+                            if dist <= R_NEAREST_NEIGHBOURS:
+                                neighs.append(par['id'])
+                                if len(neighs) >= NUM_NEIGHBOURS_LIQUID:
+                                    par_start['phase'] = 1
+                                    break 
 
     return pars
 
@@ -122,7 +123,7 @@ def find_near_cells(x_real: float, y_real: float, z_real: float, box: list, size
     y_scaled_nearest = round((y_real - box['y_left']) // size[1])
     z_scaled_nearest = round((z_real - box['z_left']) // size[2])
 
-    treshold = round(3 * (R_SEP / size[0]))
+    treshold = round(4 * (R_SEP / size[0]))
 
     for i in range(-treshold, treshold, 1):
         for j in range(-treshold, treshold, 1):
@@ -145,31 +146,29 @@ def set_phase_cells(cells: np.array, pars: np.array, box: list, cell_size: list)
             nearest_cells = find_near_cells(par['x'], par['y'], par['z'], box, cell_size)
             for id in nearest_cells:
                 cell = cells[id]
-
+            #for cell in cells:
                 if cell['phase'] != 1:
-
                     dist_x = min(
                         abs(par['x'] - cell['x']),
                         abs(box['x_length'] - abs(par['x'] - cell['x']))
                     )
 
-                    if dist_x <= R_SEP :
+                    if dist_x ** 2 <= R_SEP ** 2:
                         dist_y = min(
                             abs(par['y'] - cell['y']),
                             abs(box['y_length'] - abs(par['y'] - cell['y']))
                         )
 
-                        if dist_y <= R_SEP:
+                        if dist_y ** 2 <= R_SEP ** 2:
                             dist_z = min(
                                 abs(par['z'] - cell['z']),
                                 abs(box['z_length'] - abs(par['z'] - cell['z']))
                             )
 
-                            if dist_z <= R_SEP:
-                                dist = math.sqrt(dist_x ** 2 + dist_y ** 2 + dist_z ** 2)
-                                if dist <= R_SEP:
+                            if dist_z ** 2 <= R_SEP ** 2:
+                                dist = dist_x ** 2 + dist_y ** 2 + dist_z ** 2
+                                if dist <= R_SEP ** 2:
                                     cell['phase'] = 1
-                                    break
     return cells
 
 
@@ -207,6 +206,7 @@ with open(DUMPFILE_NAME, 'r', encoding=ENCODING) as dump_file:
 
         result_file_cells = open('result_cells.txt', 'a', encoding=ENCODING)
         result_file_volume = open('result_volumes.txt', 'a', encoding=ENCODING)
+        result_file_pars = open('result_particles.txt', 'a', encoding=ENCODING)
         line = dump_file.readline().strip()
 
         if not line:
@@ -270,6 +270,7 @@ with open(DUMPFILE_NAME, 'r', encoding=ENCODING) as dump_file:
             cell_size=cell_sizes
         )
         cells_of_biggest_cavity = find_biggest_cavity(cells=cells_data)
+
         cells_data = set_belong_cavity(cells=cells_data, cavity_cells=cells_of_biggest_cavity)
 
         result_file_cells.write('ITEM: TIMESTEP\n')
@@ -293,3 +294,20 @@ with open(DUMPFILE_NAME, 'r', encoding=ENCODING) as dump_file:
 
         result_file_cells.close()
         result_file_volume.close()
+
+
+        result_file_pars.write('ITEM: TIMESTEP\n')
+        result_file_pars.write(f'{timestep}\n')
+        result_file_pars.write('ITEM: NUMBER OF ATOMS\n')
+        result_file_pars.write(f'{number_of_particles}\n')
+        result_file_pars.write('ITEM: BOX BOUNDS pp pp pp\n')
+        result_file_pars.write(f'{lx0} {lxl}\n')
+        result_file_pars.write(f'{ly0} {lyl}\n')
+        result_file_pars.write(f'{lz0} {lzl}\n')
+        result_file_pars.write('ITEM: ATOMS id type x y z vx vy vz phase \n')
+        for par in particles:
+            result_file_pars.write(f"{par['id']} {par['type']}\
+                                   {par['x']} {par['y']} {par['z']} \
+                                   {par['vx']} {par['vy']} {par['vz']}\
+                                    {par['phase']} \n")
+        result_file_pars.close()
